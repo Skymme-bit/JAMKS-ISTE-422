@@ -150,3 +150,6 @@ dist
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+### IDEA ###
+.idea
