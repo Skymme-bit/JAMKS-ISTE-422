@@ -7,10 +7,31 @@ class AddressService {
 
     public async count(addressRequest?: any): Promise<any> {
         return new Promise<any>(async (resolve, reject) => {
+            if (!addressRequest.city && !addressRequest.zip) {
+                return reject({
+                    status: 400,
+                    message: 'Missing required search field. Please provide at least a city or zip.'
+                });
+            }
+
             this.request(addressRequest)
                 .then((response) => {
+                    if (!Array.isArray(response)) {
+                        return reject({
+                            status: 500,
+                            message: 'Unexpected response from address API'
+                        });
+                    }
+
+                    if (response.length === 0) {
+                        return resolve({
+                            count: 0,
+                            note: 'No results found for this query.'
+                        });
+                    }
+
                     resolve({
-                        "count": response.size()
+                        count: response.length
                     });
                 })
                 .catch((err) => {
@@ -23,10 +44,12 @@ class AddressService {
         return new Promise<any>(async (resolve, reject) => {
             fetch(AddressService.fetchUrl, {
                 method: "POST",
-                body: JSON.stringify(addressRequest.body)
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(addressRequest)
             })
                 .then(async (response) => {
-                    resolve(await response.json());
+                    const data = await response.json();
+                    resolve(data);
                 })
                 .catch((err) => {
                     loggerService.error({ path: "/address/request", message: `${(err as Error).message}` }).flush();
