@@ -11,21 +11,21 @@ class AddressEndpoint extends baseEndpoint {
     }
 
     private count_post(req: Request, res: Response, next: NextFunction) {
-        addressService.count(req)
+        addressService.count(req.body)
             .then((response) => {
                 res.status(200).send(responseWrapper(RESPONSE_STATUS_OK, RESPONSE_EVENT_READ, response));
             }).catch((err) => {
-                res.status(400).send(responseWrapper(RESPONSE_STATUS_FAIL, RESPONSE_EVENT_READ, err));
-            });
+            res.status(400).send(responseWrapper(RESPONSE_STATUS_FAIL, RESPONSE_EVENT_READ, err));
+        });
     }
 
     private request_post(req: Request, res: Response, next: NextFunction) {
-        addressService.request(req)
+        addressService.request(req.body)
             .then((response) => {
                 res.status(200).send(responseWrapper(RESPONSE_STATUS_OK, RESPONSE_EVENT_READ, response));
             }).catch((err) => {
-                res.status(400).send(responseWrapper(RESPONSE_STATUS_FAIL, RESPONSE_EVENT_READ, err));
-            });
+            res.status(400).send(responseWrapper(RESPONSE_STATUS_FAIL, RESPONSE_EVENT_READ, err));
+        });
     }
 }
 
