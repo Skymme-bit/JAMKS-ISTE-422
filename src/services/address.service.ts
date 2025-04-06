@@ -7,14 +7,29 @@ class AddressService {
 
     public async count(addressRequest?: any): Promise<any> {
         return new Promise<any>(async (resolve, reject) => {
+            if (!addressRequest.city && !addressRequest.zip) {
+                return reject(new Error('Missing required search field. Please provide at least a city or zip.'));
+            }
+
             this.request(addressRequest)
                 .then((response) => {
+                    if (!Array.isArray(response)) {
+                        return reject(new Error('Unexpected response from address API'));
+                    }
+
+                    if (response.length === 0) {
+                        return resolve({
+                            count: 0,
+                            note: 'No results found for this query.'
+                        });
+                    }
+
                     resolve({
-                        "count": response.size()
+                        count: response.length
                     });
                 })
                 .catch((err) => {
-                    reject(err);
+                    reject(new Error('Failed to fetch from address API'));
                 });
         });
     }
@@ -23,7 +38,8 @@ class AddressService {
         return new Promise<any>(async (resolve, reject) => {
             fetch(AddressService.fetchUrl, {
                 method: "POST",
-                body: JSON.stringify(addressRequest.body)
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(addressRequest)
             })
                 .then(async (response) => {
                     resolve(await response.json());
