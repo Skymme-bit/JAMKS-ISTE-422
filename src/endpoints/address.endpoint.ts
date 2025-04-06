@@ -14,9 +14,15 @@ class AddressEndpoint extends baseEndpoint {
         addressService.count(req.body)
             .then((response) => {
                 res.status(200).send(responseWrapper(RESPONSE_STATUS_OK, RESPONSE_EVENT_READ, response));
-            }).catch((err) => {
-            res.status(400).send(responseWrapper(RESPONSE_STATUS_FAIL, RESPONSE_EVENT_READ, err));
-        });
+            })
+            .catch((err) => {
+                const message = err.message || 'Internal Server Error';
+                const statusCode = message.includes('Missing required search') ? 400 :
+                    message.includes('Unexpected response') ? 500 :
+                        message.includes('Failed to fetch') ? 503 : 500;
+
+                res.status(statusCode).send(responseWrapper(RESPONSE_STATUS_FAIL, RESPONSE_EVENT_READ, { message }));
+            });
     }
 
     private request_post(req: Request, res: Response, next: NextFunction) {

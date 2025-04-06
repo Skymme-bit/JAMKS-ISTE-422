@@ -8,19 +8,13 @@ class AddressService {
     public async count(addressRequest?: any): Promise<any> {
         return new Promise<any>(async (resolve, reject) => {
             if (!addressRequest.city && !addressRequest.zip) {
-                return reject({
-                    status: 400,
-                    message: 'Missing required search field. Please provide at least a city or zip.'
-                });
+                return reject(new Error('Missing required search field. Please provide at least a city or zip.'));
             }
 
             this.request(addressRequest)
                 .then((response) => {
                     if (!Array.isArray(response)) {
-                        return reject({
-                            status: 500,
-                            message: 'Unexpected response from address API'
-                        });
+                        return reject(new Error('Unexpected response from address API'));
                     }
 
                     if (response.length === 0) {
@@ -35,7 +29,7 @@ class AddressService {
                     });
                 })
                 .catch((err) => {
-                    reject(err);
+                    reject(new Error('Failed to fetch from address API'));
                 });
         });
     }
@@ -48,8 +42,7 @@ class AddressService {
                 body: JSON.stringify(addressRequest)
             })
                 .then(async (response) => {
-                    const data = await response.json();
-                    resolve(data);
+                    resolve(await response.json());
                 })
                 .catch((err) => {
                     loggerService.error({ path: "/address/request", message: `${(err as Error).message}` }).flush();
