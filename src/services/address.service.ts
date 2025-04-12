@@ -52,35 +52,46 @@ class AddressService {
     }
 
     public async distance(addressRequest?: any): Promise<any> {
-        // Complete this
+        return new Promise<any>((resolve, reject) => {
+            const {
+                lat1, lon1,
+                lat2, lon2,
+                unit
+            } = addressRequest || {};
+
+            if (!lat1 || !lon1 || !lat2 || !lon2) {
+                return reject(new Error('Missing coordinates. Required: lat1, lon1, lat2, lon2.'));
+            }
+
+            const toRadians = (degrees: number) => degrees * (Math.PI / 180);
+
+            const R = 6371;
+            const dLat = toRadians(parseFloat(lat2) - parseFloat(lat1));
+            const dLon = toRadians(parseFloat(lon2) - parseFloat(lon1));
+
+            const a =
+                Math.sin(dLat / 2) ** 2 +
+                Math.cos(toRadians(parseFloat(lat1))) * Math.cos(toRadians(parseFloat(lat2))) *
+                Math.sin(dLon / 2) ** 2;
+
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distanceInKm = R * c;
+            const distanceInMi = distanceInKm * 0.621371;
+
+            let result: any = {
+                km: parseFloat(distanceInKm.toFixed(2)),
+                mi: parseFloat(distanceInMi.toFixed(2))
+            };
+
+            if (unit === 'km') {
+                result = { km: result.km };
+            } else if (unit === 'mi') {
+                result = { mi: result.mi };
+            }
+
+            resolve({ distance: result });
+        });
     }
-
-    // private async getDistance(lat1: string, lon1: string, lat2: string, lon2: string) {
-    //     // Defining this function inside of this private method means it's
-    //     // not accessible outside of it, which is perfect for encapsulation.
-    //     const toRadians = (degrees: string) => {
-    //         return degrees * (Math.PI / 180);
-    //     }
-
-    //     // Radius of the Earth in KM
-    //     const R = 6371;
-
-    //     // Convert Lat and Longs to Radians
-    //     const dLat = toRadians(lat2 - lat1);
-    //     const dLon = toRadians(lon2 - lon1);
-
-    //     // Haversine Formula to calculate the distance between two locations
-    //     // on a sphere.
-    //     const a =
-    //         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    //         Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
-    //         Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
-    //     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    //     // convert and return distance in KM
-    //     return R * c;
-    // }
 }
 
 export default new AddressService();
