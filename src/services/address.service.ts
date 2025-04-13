@@ -105,6 +105,33 @@ class AddressService {
             resolve({ distance: result });
         });
     }
+
+    public async cityLookup(addressRequest?: any): Promise<any> {
+        return new Promise<any>(async (resolve, reject) => {
+            fetch(AddressService.fetchUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(addressRequest)
+            })
+                .then(async (response) => {
+                    if (!response.ok) {
+                        return reject(new Error("Failed to fetch from address API"));
+                    }
+    
+                    const data = await response.json();
+                    if (!Array.isArray(data) || data.length === 0 || !data[0].city) {
+                        return reject(new Error("City not found for given zip code."));
+                    }
+    
+                    resolve(data[0].city);
+                })
+                .catch((err) => {
+                    loggerService.error({ path: "/address/city", message: `${(err as Error).message}` }).flush();
+                    reject(err);
+                });
+        });
+    }
+    
 }
 
 export default new AddressService();
