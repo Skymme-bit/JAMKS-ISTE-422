@@ -62,3 +62,46 @@ describe('addressService.distance()', () => {
         expect(result.distance).toHaveProperty('mi');
     });
 });
+
+describe('addressService.request()', () => {
+    beforeAll(() => {
+        global.fetch = jest.fn(() =>
+            Promise.resolve({
+                json: () => Promise.resolve([
+                    { address: 'Address 1' },
+                    { address: 'Address 2' },
+                    { address: 'Address 3' },
+                    { address: 'Address 4' },
+                    { address: 'Address 5' },
+                    { address: 'Address 6' },
+                ])
+            })
+        ) as jest.Mock;
+    });
+
+    it('should return paginated results correctly', async () => {
+        const result = await addressService.request({
+            page: 2,
+            limit: 2
+        });
+
+        expect(result.length).toBe(2);
+        expect(result[0].address).toBe('Address 3');
+        expect(result[1].address).toBe('Address 4');
+    });
+
+    it('should return all results if page and limit are missing', async () => {
+        const result = await addressService.request({});
+
+        expect(result.length).toBe(6);
+    });
+
+    it('should return empty array if page is out of bounds', async () => {
+        const result = await addressService.request({
+            page: 5,
+            limit: 10
+        });
+
+        expect(result.length).toBe(0);
+    });
+});
