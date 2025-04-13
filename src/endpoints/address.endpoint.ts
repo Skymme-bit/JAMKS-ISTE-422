@@ -34,17 +34,28 @@ class AddressEndpoint extends baseEndpoint {
         });
     }
 
-    private distance_post(req: Request, res: Response, next: NextFunction) {
-        addressService.distance(req.body)
-            .then((response) => {
-                res.status(200).send(responseWrapper(RESPONSE_STATUS_OK, RESPONSE_EVENT_READ, response));
+    private city_post(req: Request, res: Response, next: NextFunction) {
+        const keys = Object.keys(req.body);
+        if (!req.body.zipcode || keys.length !== 1) {
+            const message = "Zip code is required and must be the only field provided.";
+            res.status(400).send(responseWrapper(RESPONSE_STATUS_FAIL, RESPONSE_EVENT_READ, { message }));
+            return;
+        }
+    
+        addressService.cityLookup(req.body)
+            .then((city) => {
+                res.status(200).send(responseWrapper(RESPONSE_STATUS_OK, RESPONSE_EVENT_READ, { city }));
             })
             .catch((err) => {
                 const message = err.message || 'Internal Server Error';
-                const statusCode = message.includes('Missing coordinates') ? 400 : 500;
+                const statusCode = message.includes('only field') ? 400 :
+                    message.includes('City not found') ? 404 :
+                    message.includes('Failed to fetch') ? 503 : 500;
+    
                 res.status(statusCode).send(responseWrapper(RESPONSE_STATUS_FAIL, RESPONSE_EVENT_READ, { message }));
             });
     }
+    
 }
 
 const addressEndpoint = new AddressEndpoint();
