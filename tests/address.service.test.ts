@@ -62,3 +62,67 @@ describe('addressService.distance()', () => {
         expect(result.distance).toHaveProperty('mi');
     });
 });
+
+// city lookup tests
+describe('addressService.cityLookup()', () => {
+    it('should return city name when zip is valid', async () => {
+        globalThis.fetch = (async (_url: any, _options: any) => {
+            return {
+                ok: true,
+                json: async () => [{ city: 'Rochester' }]
+            } as Response;
+        }) as any;
+
+        const result = await addressService.cityLookup({ zip: '14623' });
+        expect(result).toBe('Rochester');
+    });
+
+    it('should throw an error when zip is missing', async () => {
+        const resultPromise = addressService.cityLookup({});
+        await expect(resultPromise).rejects.toThrow('Zip code is required');
+    });
+
+    it('should throw an error when city is not found', async () => {
+        globalThis.fetch = (async () => {
+            return {
+                ok: true,
+                json: async () => []
+            } as Response;
+        }) as any;
+
+        const resultPromise = addressService.cityLookup({ zip: '99999' });
+        await expect(resultPromise).rejects.toThrow('City not found');
+    });
+
+    it('should throw an error when fetch fails', async () => {
+        globalThis.fetch = (async () => {
+            throw new Error('Simulated failure');
+        }) as any;
+
+        const resultPromise = addressService.cityLookup({ zip: 'FAIL' });
+        await expect(resultPromise).rejects.toThrow('Failed to fetch from address API');
+    });
+
+    it('should return city from cache on repeated call', async () => {
+        let fetchCount = 0;
+    
+        (global as any).fetch = async () => {
+            fetchCount++;
+            return {
+                ok: true,
+                json: async () => [{ city: 'Rochester' }]
+            };
+        };
+    
+        // Clear the cache manually to be sure
+        (addressService as any).cityCache = {};
+    
+        const first = await addressService.cityLookup({ zip: '14623' });
+        const second = await addressService.cityLookup({ zip: '14623' });
+    
+        expect(first).toBe('Rochester');
+        expect(second).toBe('Rochester');
+        expect(fetchCount).toBe(1); // ✅ This should now be correct
+    });
+    
+});
