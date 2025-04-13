@@ -2,6 +2,9 @@ import loggerService from "./logger.service";
 
 class AddressService {
     private static fetchUrl = 'https://ischool.gccis.rit.edu/addresses/';
+    // At the top of your AddressService class
+    private cityCache: Record<string, string> = {};
+
 
     constructor() { }
 
@@ -105,6 +108,50 @@ class AddressService {
             resolve({ distance: result });
         });
     }
+
+    public async cityLookup(addressRequest?: any): Promise<any> {
+        return new Promise<any>(async (resolve, reject) => {
+            const zip = addressRequest?.zip;
+            if (!zip || typeof zip !== 'string') {
+                return reject(new Error('Zip code is required'));
+            }
+    
+            // Return from cache if already looked up
+            if (this.cityCache[zip]) {
+                return resolve(this.cityCache[zip]);
+            }
+    
+            try {
+                const response = await fetch(AddressService.fetchUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ zipcode: zip })
+                });
+    
+                if (!response.ok) {
+                    return reject(new Error('Failed to fetch from address API'));
+                }
+    
+                const data = await response.json();
+    
+                if (!Array.isArray(data) || data.length === 0 || !data[0].city) {
+                    return reject(new Error('City not found'));
+                }
+    
+                const city = data[0].city;
+    
+                // Save in cache
+                this.cityCache[zip] = city;
+    
+                resolve(city);
+            } catch (error) {
+                reject(new Error('Failed to fetch from address API'));
+            }
+        });
+    }
+    
+    
+    
 }
 
 export default new AddressService();
