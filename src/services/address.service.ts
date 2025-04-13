@@ -41,16 +41,29 @@ class AddressService {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(addressRequest)
             })
-                .then(async (response) => {
-                    resolve(await response.json());
-                })
-                .catch((err) => {
-                    loggerService.error({ path: "/address/request", message: `${(err as Error).message}` }).flush();
-                    reject(err);
-                });
+            .then(async (response) => {
+                let result = await response.json();
+    
+                if (!Array.isArray(result)) {
+                    return reject(new Error('Unexpected response from address API'));
+                }
+
+                const { page, limit } = addressRequest;
+                if (page !== undefined && limit !== undefined) {
+                    const startIndex = (page - 1) * limit;
+                    const endIndex = startIndex + limit;
+                    result = result.slice(startIndex, endIndex);
+                }
+    
+                resolve(result);
+            })
+            .catch((err) => {
+                loggerService.error({ path: "/address/request", message: `${(err as Error).message}` }).flush();
+                reject(err);
+            });
         });
     }
-
+    
     public async distance(addressRequest?: any): Promise<any> {
         return new Promise<any>((resolve, reject) => {
             const {
