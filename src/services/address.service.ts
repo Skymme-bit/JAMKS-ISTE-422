@@ -2,6 +2,9 @@ import loggerService from "./logger.service";
 
 class AddressService {
     private static fetchUrl = 'https://ischool.gccis.rit.edu/addresses/';
+    // At the top of your AddressService class
+    private cityCache: Record<string, string> = {};
+
 
     constructor() { }
 
@@ -108,29 +111,46 @@ class AddressService {
 
     public async cityLookup(addressRequest?: any): Promise<any> {
         return new Promise<any>(async (resolve, reject) => {
-            fetch(AddressService.fetchUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(addressRequest)
-            })
-                .then(async (response) => {
-                    if (!response.ok) {
-                        return reject(new Error("Failed to fetch from address API"));
-                    }
+            const zip = addressRequest?.zip;
+            if (!zip || typeof zip !== 'string') {
+                return reject(new Error('Zip code is required'));
+            }
     
-                    const data = await response.json();
-                    if (!Array.isArray(data) || data.length === 0 || !data[0].city) {
-                        return reject(new Error("City not found for given zip code."));
-                    }
+            // Return from cache if already looked up
+            if (this.cityCache[zip]) {
+                return resolve(this.cityCache[zip]);
+            }
     
-                    resolve(data[0].city);
-                })
-                .catch((err) => {
-                    loggerService.error({ path: "/address/city", message: `${(err as Error).message}` }).flush();
-                    reject(err);
+            try {
+                const response = await fetch(AddressService.fetchUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ zipcode: zip })
                 });
+    
+                if (!response.ok) {
+                    return reject(new Error('Failed to fetch from address API'));
+                }
+    
+                const data = await response.json();
+    
+                if (!Array.isArray(data) || data.length === 0 || !data[0].city) {
+                    return reject(new Error('City not found'));
+                }
+    
+                const city = data[0].city;
+    
+                // Save in cache
+                this.cityCache[zip] = city;
+    
+                resolve(city);
+            } catch (error) {
+                reject(new Error('Failed to fetch from address API'));
+            }
         });
     }
+    
+    
     
 }
 
