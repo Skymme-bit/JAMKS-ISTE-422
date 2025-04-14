@@ -25,6 +25,18 @@ class AddressEndpoint extends baseEndpoint {
             });
     }
 
+    private distance_post(req: Request, res: Response, next: NextFunction) {
+        addressService.distance(req.body)
+            .then((response) => {
+                res.status(200).send(responseWrapper(RESPONSE_STATUS_OK, RESPONSE_EVENT_READ, response));
+            })
+            .catch((err) => {
+                const message = err.message || 'Internal Server Error';
+                const statusCode = message.includes('Missing coordinates') ? 400 : 500;
+                res.status(statusCode).send(responseWrapper(RESPONSE_STATUS_FAIL, RESPONSE_EVENT_READ, { message }));
+            });
+    }
+
     private request_post(req: Request, res: Response, next: NextFunction) {
         addressService.request(req.body)
             .then((response) => {
@@ -35,16 +47,7 @@ class AddressEndpoint extends baseEndpoint {
     }
 
     private city_post(req: Request, res: Response, next: NextFunction) {
-        const { zip } = req.body;
-    
-        // Validate: must be only zip, and zip must be a string
-        if (!zip || typeof zip !== 'string' || Object.keys(req.body).length !== 1) {
-            return res.status(400).send(responseWrapper(RESPONSE_STATUS_FAIL, RESPONSE_EVENT_READ, {
-                message: 'Zip code is required and no additional fields are allowed.'
-            }));
-        }
-    
-        addressService.cityLookup({ zip })
+        addressService.cityLookup(req.body)
             .then((city) => {
                 res.status(200).send(responseWrapper(RESPONSE_STATUS_OK, RESPONSE_EVENT_READ, { city }));
             })
@@ -52,13 +55,12 @@ class AddressEndpoint extends baseEndpoint {
                 const message = err.message || 'Internal Server Error';
                 const statusCode = message.includes('Zip code is required') ? 400 :
                     message.includes('City not found') ? 404 :
-                    message.includes('Failed to fetch') ? 503 : 500;
-    
+                        message.includes('Failed to fetch') ? 503 : 500;
+
                 res.status(statusCode).send(responseWrapper(RESPONSE_STATUS_FAIL, RESPONSE_EVENT_READ, { message }));
             });
     }
-    
-    
+
 }
 
 const addressEndpoint = new AddressEndpoint();
