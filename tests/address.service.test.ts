@@ -106,7 +106,6 @@ describe('addressService.request()', () => {
     });
 });
 
-// city lookup tests
 describe('addressService.cityLookup()', () => {
     it('should return city name when zip is valid', async () => {
         globalThis.fetch = (async (_url: any, _options: any) => {
@@ -157,7 +156,6 @@ describe('addressService.cityLookup()', () => {
             };
         };
 
-        // Clear the cache manually to be sure
         (addressService as any).cityCache = {};
 
         const first = await addressService.cityLookup({ zip: '14623' });
@@ -165,7 +163,56 @@ describe('addressService.cityLookup()', () => {
 
         expect(first).toBe('Rochester');
         expect(second).toBe('Rochester');
-        expect(fetchCount).toBe(1); // ✅ This should now be correct
+        expect(fetchCount).toBe(1);
     });
 
+});
+
+describe('AddressService.count()', () => {
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    it('should return count 0 when no results found', async () => {
+        jest.spyOn(addressService as any, 'request').mockResolvedValueOnce([]); // 👈 on force une réponse vide
+
+        const result = await addressService.count({ city: 'Nowhere' });
+
+        expect(result).toEqual({
+            count: 0,
+            note: 'No results found for this query.'
+        });
+    });
+
+    it('should return correct count when results are found', async () => {
+        jest.spyOn(addressService as any, 'request').mockResolvedValueOnce([
+            { id: 1 }, { id: 2 }, { id: 3 }
+        ]);
+
+        const result = await addressService.count({ zip: '12345' });
+
+        expect(result).toEqual({ count: 3 });
+    });
+
+    it('should throw an error if both city and zip are missing', async () => {
+        await expect(addressService.count({ state: 'NY' }))
+            .rejects
+            .toThrow('Missing required search field');
+    });
+
+    it('should throw an error if request() returns non-array', async () => {
+        jest.spyOn(addressService as any, 'request').mockResolvedValueOnce({ foo: 'bar' });
+
+        await expect(addressService.count({ city: 'Rochester' }))
+            .rejects
+            .toThrow('Unexpected response from address API');
+    });
+
+    it('should throw an error if request() fails', async () => {
+        jest.spyOn(addressService as any, 'request').mockRejectedValueOnce(new Error('network error'));
+
+        await expect(addressService.count({ zip: '14623' }))
+            .rejects
+            .toThrow('Failed to fetch from address API');
+    });
 });
