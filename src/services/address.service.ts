@@ -60,16 +60,33 @@ class AddressService {
                         return reject(new Error('Unexpected response from address API'));
                     }
 
-                    const { page, limit } = addressRequest;
+                    let { page, limit } = addressRequest;
 
-                    if ((page && isNaN(page)) || (limit && isNaN(limit))) {
+                    if (page !== undefined && isNaN(page)) {
                         loggerService.warning({
                             path: "/address/request",
-                            message: "Invalid page or limit format"
+                            message: "Invalid page format; expected a number"
+                        }).flush();
+                        page = undefined;
+                    }
+
+                    if (limit !== undefined && isNaN(limit)) {
+                        loggerService.warning({
+                            path: "/address/request",
+                            message: "Invalid limit format; expected a number"
+                        }).flush();
+                        limit = undefined;
+                    }
+
+                    if (limit !== undefined && page === undefined) {
+                        page = 1;
+                        loggerService.info({
+                            path: "/address/request",
+                            message: "Page value not provided; defaulting to page 1"
                         }).flush();
                     }
 
-                    if (page !== undefined && limit !== undefined && !isNaN(page) && !isNaN(limit)) {
+                    if (page !== undefined && limit !== undefined) {
                         const startIndex = (page - 1) * limit;
                         const endIndex = startIndex + limit;
                         result = result.slice(startIndex, endIndex);
@@ -98,12 +115,19 @@ class AddressService {
 
     public async distance(addressRequest?: any): Promise<any> {
         return new Promise<any>((resolve, reject) => {
-            loggerService.info({ path: "/address/distance", message: "Received distance calculation request" }).flush();
+            loggerService.info({
+                path: "/address/distance",
+                message: "Received distance calculation request"
+            }).flush();
 
             const { lat1, lon1, lat2, lon2, unit } = addressRequest || {};
 
             if (!lat1 || !lon1 || !lat2 || !lon2) {
-                loggerService.warning({ path: "/address/distance", message: "Missing coordinates in request" }).flush();
+                loggerService.warning({
+                    path: "/address/distance",
+                    message: "Missing coordinates in request. Required: lat1, lon1, lat2, lon2."
+                }).flush();
+
                 return reject(new Error('Missing coordinates. Required: lat1, lon1, lat2, lon2.'));
             }
 
@@ -134,10 +158,18 @@ class AddressService {
                     result = { mi: result.mi };
                 }
 
-                loggerService.info({ path: "/address/distance", message: `Distance calculated successfully` }).flush();
+                loggerService.info({
+                    path: "/address/distance",
+                    message: "Distance calculated successfully"
+                }).flush();
+
                 resolve({ distance: result });
             } catch (err) {
-                loggerService.error({ path: "/address/distance", message: `Distance calculation error: ${(err as Error).message}` }).flush();
+                loggerService.error({
+                    path: "/address/distance",
+                    message: `Unexpected distance calculation error: ${(err as Error).message}`
+                }).flush();
+
                 reject(new Error('Distance calculation failed'));
             }
         });
@@ -152,17 +184,16 @@ class AddressService {
 
             const zip = addressRequest?.zip;
 
-            if (
-                !zip ||
-                typeof zip !== 'string' ||
-                Object.keys(addressRequest).length !== 1
-            ) {
+            const isUSZip = typeof zip === 'string' && /^\d{5}$/.test(zip);
+            const isCanadianPostal = typeof zip === 'string' && /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/.test(zip);
+
+            if (!zip || (!isUSZip && !isCanadianPostal) || Object.keys(addressRequest).length !== 1) {
                 loggerService.warning({
                     path: "/address/city",
-                    message: "Missing zip or additional unexpected fields"
+                    message: "Invalid or missing zip. Only valid U.S. or Canadian postal codes allowed, no additional fields"
                 }).flush();
 
-                return reject(new Error('Zip code is required and no additional fields are allowed.'));
+                return reject(new Error('Zip code is required (5-digit U.S. or 6-character Canadian) and no additional fields are allowed.'));
             }
 
             if (this.cityCache[zip]) {

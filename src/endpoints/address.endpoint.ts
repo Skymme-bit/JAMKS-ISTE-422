@@ -5,6 +5,13 @@ import responseWrapper from '../services/response.service';
 
 import { RESPONSE_STATUS_OK, RESPONSE_STATUS_FAIL, RESPONSE_EVENT_READ } from '../constants/generic.constants';
 
+const ERROR_MISSING_SEARCH = 'Missing required search';
+const ERROR_UNEXPECTED_RESPONSE = 'Unexpected response';
+const ERROR_FAILED_FETCH = 'Failed to fetch';
+const ERROR_MISSING_COORDINATES = 'Missing coordinates';
+const ERROR_ZIP_REQUIRED = 'Zip code is required';
+const ERROR_CITY_NOT_FOUND = 'City not found';
+
 class AddressEndpoint extends baseEndpoint {
     public post(req: Request, res: Response, next: NextFunction) {
         super.executeSubRoute(addressEndpoint, req, res, next);
@@ -17,9 +24,9 @@ class AddressEndpoint extends baseEndpoint {
             })
             .catch((err) => {
                 const message = err.message || 'Internal Server Error';
-                const statusCode = message.includes('Missing required search') ? 400 :
-                    message.includes('Unexpected response') ? 500 :
-                        message.includes('Failed to fetch') ? 503 : 500;
+                const statusCode = message.includes(ERROR_MISSING_SEARCH) ? 400 :
+                    message.includes(ERROR_UNEXPECTED_RESPONSE) ? 500 :
+                        message.includes(ERROR_FAILED_FETCH) ? 503 : 500;
 
                 res.status(statusCode).send(responseWrapper(RESPONSE_STATUS_FAIL, RESPONSE_EVENT_READ, { message }));
             });
@@ -32,7 +39,7 @@ class AddressEndpoint extends baseEndpoint {
             })
             .catch((err) => {
                 const message = err.message || 'Internal Server Error';
-                const statusCode = message.includes('Missing coordinates') ? 400 : 500;
+                const statusCode = message.includes(ERROR_MISSING_COORDINATES) ? 400 : 500;
                 res.status(statusCode).send(responseWrapper(RESPONSE_STATUS_FAIL, RESPONSE_EVENT_READ, { message }));
             });
     }
@@ -53,14 +60,13 @@ class AddressEndpoint extends baseEndpoint {
             })
             .catch((err) => {
                 const message = err.message || 'Internal Server Error';
-                const statusCode = message.includes('Zip code is required') ? 400 :
-                    message.includes('City not found') ? 404 :
-                        message.includes('Failed to fetch') ? 503 : 500;
+                const statusCode = message.includes(ERROR_ZIP_REQUIRED) ? 400 :
+                    message.includes(ERROR_CITY_NOT_FOUND) ? 404 :
+                        message.includes(ERROR_FAILED_FETCH) ? 503 : 500;
 
                 res.status(statusCode).send(responseWrapper(RESPONSE_STATUS_FAIL, RESPONSE_EVENT_READ, { message }));
             });
     }
-
 }
 
 const addressEndpoint = new AddressEndpoint();

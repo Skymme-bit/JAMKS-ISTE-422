@@ -27,6 +27,7 @@ describe('addressService.distance()', () => {
 
         expect(result.distance).toHaveProperty('mi');
         expect(result.distance).not.toHaveProperty('km');
+        expect(typeof result.distance.mi).toBe('number');
     });
 
     it('should return only kilometer when unit is "km"', async () => {
@@ -40,6 +41,7 @@ describe('addressService.distance()', () => {
 
         expect(result.distance).toHaveProperty('km');
         expect(result.distance).not.toHaveProperty('mi');
+        expect(typeof result.distance.km).toBe('number');
     });
 
     it('should throw an error when coordinates are missing', async () => {
@@ -141,7 +143,8 @@ describe('addressService.cityLookup()', () => {
             throw new Error('Simulated failure');
         }) as any;
 
-        const resultPromise = addressService.cityLookup({ zip: 'FAIL' });
+        const resultPromise = addressService.cityLookup({ zip: '12345' });
+
         await expect(resultPromise).rejects.toThrow('Failed to fetch from address API');
     });
 
