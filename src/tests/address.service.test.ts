@@ -1,4 +1,4 @@
-import addressService from '../src/services/address.service';
+import addressService from '../services/address.service';
 
 describe('addressService.distance()', () => {
     it('should return distance in both km and mi when unit is not provided', async () => {
