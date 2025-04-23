@@ -78,7 +78,7 @@ class Logger {
      */
     private writeToStandardOut(): void {
         if (this.writeToStdOut) {
-            for (let log of this.cache) {
+            for (const log of this.cache) {
                 process.stdout.write(`${log}\n`);
             }
         }
@@ -113,8 +113,8 @@ class Logger {
      */
     private timeStamp(): string {
         // const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        let currentTime = new Date();
-        let timeStamp = currentTime.toString()
+        const currentTime = new Date();
+        const timeStamp = currentTime.toString()
 
         return `${timeStamp} `;
     }
@@ -129,7 +129,7 @@ class Logger {
             return formattedKeyPairs;
         }
 
-        for (let key in logKeyPairs) {
+        for (const key in logKeyPairs) {
             formattedKeyPairs += `[${key}]=${logKeyPairs[key]} `;
         }
 
