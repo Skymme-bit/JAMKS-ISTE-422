@@ -50,7 +50,7 @@ class Logger {
      * @param logType A interface that accepts the request path and the log message
      * @param logKeyPairs An empty object that extending the logging frame with custom structured key value pairs.
      */
-    public info(logType: ILoggerBody, logKeyPairs: any = {}): Logger {
+    public info(logType: ILoggerBody, logKeyPairs: Record<string, unknown> = {}): Logger {
         this.log(logType, 'info', logKeyPairs);
         return this;
     }
@@ -91,7 +91,7 @@ class Logger {
         //TODO: Implement logic to send log to a log aggregattion service like Prometheus | Grafana Loki.
     }
 
-    private log(logType: ILoggerBody, level: string, logKeyPairs?: {}): void {
+    private log(logType: ILoggerBody, level: string, logKeyPairs?: Record<string, unknown>): void {
         const keySetValues = this.parseLogKeyPairs(logKeyPairs);
         const logMessage = `[time]=${this.timeStamp()} [level]=${level} [message]='${logType.message}' ${keySetValues}[path]=${logType.path} [execution_time]=${this.executionTime()}ms`;
 
