@@ -110,7 +110,7 @@ describe('addressService.request()', () => {
 
 describe('addressService.cityLookup()', () => {
     it('should return city name when zip is valid', async () => {
-        globalThis.fetch = (async (_url: any, _options: any) => {
+        globalThis.fetch = (async () => {
             return {
                 ok: true,
                 json: async () => [{ city: 'Rochester' }]

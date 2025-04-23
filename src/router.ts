@@ -1,6 +1,5 @@
 import fs from 'fs';
 import express, { NextFunction, Request, Response } from 'express';
-import createHttpError from 'http-errors';
 import { ENV } from './constants/environment-vars.constants';
 
 const router = express.Router();
@@ -8,9 +7,9 @@ const router = express.Router();
 // Middleware to handle invalid endpoints
 router.use((req: Request, res: Response, next: NextFunction) => {
     try {
-        const path = getEndpointControllerPath(req);
+        getEndpointControllerPath(req);
         next();
-    } catch (err) {
+    } catch {
         res.status(404).json({
             error: {
                 status: 404,
