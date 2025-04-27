@@ -27,7 +27,7 @@ app.use(async (req, res: Response, next: NextFunction) => {
     next(createHttpError.BadRequest());
 });
 
-app.use(async (err: any, req: Request, res: Response) => {
+app.use(async (err: any, req: Request, res: Response, next: NextFunction) => {
     loggerService.error({ message: err.message, path: req.path }).flush();
     res.status(500).send({
         error: {

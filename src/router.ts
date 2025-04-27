@@ -1,5 +1,6 @@
 import fs from 'fs';
 import express, { NextFunction, Request, Response } from 'express';
+import createHttpError from 'http-errors';
 import { ENV } from './constants/environment-vars.constants';
 
 const router = express.Router();
@@ -7,9 +8,9 @@ const router = express.Router();
 // Middleware to handle invalid endpoints
 router.use((req: Request, res: Response, next: NextFunction) => {
     try {
-        getEndpointControllerPath(req);
+        const path = getEndpointControllerPath(req);
         next();
-    } catch {
+    } catch (err) {
         res.status(404).json({
             error: {
                 status: 404,
@@ -19,24 +20,20 @@ router.use((req: Request, res: Response, next: NextFunction) => {
     }
 });
 
-router.get('*', async (req: Request, res: Response, next: NextFunction) => {
-    const endpoint = await import(getEndpointControllerPath(req));
-    endpoint.getRoute(req, res, next);
+router.get('*', (req: Request, res: Response, next: NextFunction) => {
+    (require(getEndpointControllerPath(req))).getRoute(req, res, next);
 });
 
-router.post('*', async (req: Request, res: Response, next: NextFunction) => {
-    const endpoint = await import(getEndpointControllerPath(req));
-    endpoint.postRoute(req, res, next);
+router.post('*', (req: Request, res: Response, next: NextFunction) => {
+    (require(getEndpointControllerPath(req))).postRoute(req, res, next);
 });
 
-router.put('*', async (req: Request, res: Response, next: NextFunction) => {
-    const endpoint = await import(getEndpointControllerPath(req));
-    endpoint.putRoute(req, res, next);
+router.put('*', (req: Request, res: Response, next: NextFunction) => {
+    (require(getEndpointControllerPath(req))).putRoute(req, res, next);
 });
 
-router.delete('*', async (req: Request, res: Response, next: NextFunction) => {
-    const endpoint = await import(getEndpointControllerPath(req));
-    endpoint.deleteRoute(req, res, next);
+router.delete('*', (req: Request, res: Response, next: NextFunction) => {
+    (require(getEndpointControllerPath(req))).deleteRoute(req, res, next);
 });
 
 function getEndpointControllerPath(req: Request): string {
