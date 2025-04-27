@@ -17,7 +17,7 @@ class AddressEndpoint extends baseEndpoint {
         super.executeSubRoute(addressEndpoint, req, res, next);
     }
 
-    private count_post(req: Request, res: Response, next: NextFunction) {
+    private count_post(req: Request, res: Response) {
         addressService.count(req.body)
             .then((response) => {
                 res.status(200).send(responseWrapper(RESPONSE_STATUS_OK, RESPONSE_EVENT_READ, response));
@@ -32,7 +32,7 @@ class AddressEndpoint extends baseEndpoint {
             });
     }
 
-    private distance_post(req: Request, res: Response, next: NextFunction) {
+    private distance_post(req: Request, res: Response) {
         addressService.distance(req.body)
             .then((response) => {
                 res.status(200).send(responseWrapper(RESPONSE_STATUS_OK, RESPONSE_EVENT_READ, response));
@@ -44,7 +44,7 @@ class AddressEndpoint extends baseEndpoint {
             });
     }
 
-    private request_post(req: Request, res: Response, next: NextFunction) {
+    private request_post(req: Request, res: Response) {
         addressService.request(req.body)
             .then((response) => {
                 res.status(200).send(responseWrapper(RESPONSE_STATUS_OK, RESPONSE_EVENT_READ, response));
@@ -53,7 +53,7 @@ class AddressEndpoint extends baseEndpoint {
         });
     }
 
-    private city_post(req: Request, res: Response, next: NextFunction) {
+    private city_post(req: Request, res: Response) {
         addressService.cityLookup(req.body)
             .then((city) => {
                 res.status(200).send(responseWrapper(RESPONSE_STATUS_OK, RESPONSE_EVENT_READ, { city }));

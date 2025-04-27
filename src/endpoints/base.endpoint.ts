@@ -1,7 +1,4 @@
 import { NextFunction, Request, Response } from 'express';
-import responseWrapper from '../services/response.service';
-import { RESPONSE_STATUS_FAIL, RESPONSE_EVENT_READ } from '../constants/generic.constants';
-import { INVALID_REQUEST } from '../constants/errors.constants';
 import createHttpError from 'http-errors';
 
 class BaseEndpoint {
@@ -12,20 +9,20 @@ class BaseEndpoint {
 
     public constructor() { }
 
-    public get(req: Request, res: Response, next: NextFunction) {
-        throw new createHttpError.BadRequest();
+    public get(_req: Request, _res: Response, _next: NextFunction): void {
+        throw new createHttpError.BadRequest("GET not implemented");
     }
 
-    public post(req: Request, res: Response, next: NextFunction) {
-        throw new createHttpError.BadRequest();
+    public post(_req: Request, _res: Response, _next: NextFunction): void {
+        throw new createHttpError.BadRequest("POST not implemented");
     }
 
-    public put(req: Request, res: Response, next: NextFunction) {
-        throw new createHttpError.BadRequest();
+    public put(_req: Request, _res: Response, _next: NextFunction): void {
+        throw new createHttpError.BadRequest("PUT not implemented");
     }
 
-    public delete(req: Request, res: Response, next: NextFunction) {
-        throw new createHttpError.BadRequest();
+    public delete(_req: Request, _res: Response, _next: NextFunction): void {
+        throw new createHttpError.BadRequest("DELETE not implemented");
     }
 
     public executeSubRoute(endPointMethod: any, req: Request, res: Response, next: NextFunction) {
