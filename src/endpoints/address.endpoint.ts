@@ -5,6 +5,7 @@ import responseWrapper from '../services/response.service';
 
 import { RESPONSE_STATUS_OK, RESPONSE_STATUS_FAIL, RESPONSE_EVENT_READ } from '../constants/generic.constants';
 
+// Define known error messages for standardized error handling
 const ERROR_MISSING_SEARCH = 'Missing required search';
 const ERROR_UNEXPECTED_RESPONSE = 'Unexpected response';
 const ERROR_FAILED_FETCH = 'Failed to fetch';
@@ -12,11 +13,27 @@ const ERROR_MISSING_COORDINATES = 'Missing coordinates';
 const ERROR_ZIP_REQUIRED = 'Zip code is required';
 const ERROR_CITY_NOT_FOUND = 'City not found';
 
+/**
+ * AddressEndpoint class
+ *
+ * Handles specific sub-routes for address-related functionalities:
+ * - Count addresses
+ * - Calculate distance
+ * - Request address data
+ * - Lookup city based on zip
+ */
 class AddressEndpoint extends baseEndpoint {
+    /**
+     * Overrides base POST handler to dynamically dispatch subroutes (e.g., /count, /distance)
+     */
     public post(req: Request, res: Response, next: NextFunction) {
         super.executeSubRoute(addressEndpoint, req, res, next);
     }
 
+    /**
+     * Handles POST /address/count
+     * Returns the count of addresses matching the search criteria.
+     */
     private count_post(req: Request, res: Response) {
         addressService.count(req.body)
             .then((response) => {
@@ -32,6 +49,10 @@ class AddressEndpoint extends baseEndpoint {
             });
     }
 
+    /**
+     * Handles POST /address/distance
+     * Calculates the distance between two latitude/longitude coordinates.
+     */
     private distance_post(req: Request, res: Response) {
         addressService.distance(req.body)
             .then((response) => {
@@ -44,6 +65,10 @@ class AddressEndpoint extends baseEndpoint {
             });
     }
 
+    /**
+     * Handles POST /address/request
+     * Forwards the request to the upstream API and returns paginated results if applicable.
+     */
     private request_post(req: Request, res: Response) {
         addressService.request(req.body)
             .then((response) => {
@@ -53,6 +78,10 @@ class AddressEndpoint extends baseEndpoint {
         });
     }
 
+    /**
+     * Handles POST /address/city
+     * Looks up a city name based on a zip code.
+     */
     private city_post(req: Request, res: Response) {
         addressService.cityLookup(req.body)
             .then((city) => {
@@ -69,8 +98,10 @@ class AddressEndpoint extends baseEndpoint {
     }
 }
 
+// Instantiate a single endpoint object to export routes
 const addressEndpoint = new AddressEndpoint();
 
+// Export the route handlers to be mounted by the router
 const getRoute = addressEndpoint.get;
 const postRoute = addressEndpoint.post;
 const putRoute = addressEndpoint.put;

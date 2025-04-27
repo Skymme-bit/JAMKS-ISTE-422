@@ -85,10 +85,35 @@ class Logger {
     }
 
     /**
-     * @description write log to an aggregation service (like Prometheus | Grafana Loki).
+     * @description Send logs to an external log aggregation service.
+     * Example targets: Grafana Loki, Prometheus push gateway, etc.
      */
-    private sendLogsToAggregatorService(): void {
-        //TODO: Implement logic to send log to a log aggregattion service like Prometheus | Grafana Loki.
+    private async sendLogsToAggregatorService(): Promise<void> {
+        if (!this.host) {
+            console.warn("No aggregator host configured. Skipping log upload.");
+            return;
+        }
+
+        try {
+            const payload = this.cache.join("\n");
+
+            const response = await fetch(this.host, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain',
+                },
+                body: payload,
+            });
+
+            if (!response.ok) {
+                console.error(`Failed to send logs to aggregator: ${response.statusText}`);
+            } else {
+                console.info("Logs successfully sent to aggregator.");
+                this.cache = []; // Clear cache after successful send
+            }
+        } catch (error) {
+            console.error(`Error sending logs to aggregator: ${(error as Error).message}`);
+        }
     }
 
     private log(logType: ILoggerBody, level: string, logKeyPairs?: Record<string, unknown>): void {
