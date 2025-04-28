@@ -1,6 +1,6 @@
 import fs from 'fs';
+import path from 'path';
 import express, { NextFunction, Request, Response } from 'express';
-import { ENV } from './constants/environment-vars.constants';
 
 const router = express.Router();
 
@@ -40,15 +40,14 @@ router.delete('*', async (req: Request, res: Response, next: NextFunction) => {
 });
 
 function getEndpointControllerPath(req: Request): string {
-    const paths = req.baseUrl.split('/');
+    const [, name] = req.baseUrl.split('/');
+    if (!name || name === 'base') throw new Error("Invalid endpoint");
 
-    const ext = (ENV === 'dev') ? 'ts' : 'js';
-    const route = `${__dirname}/endpoints/${paths[1]}.endpoint.${ext}`;
-    if (paths.length === 1 || !fs.existsSync(route) || paths[1] == 'base') {
-        throw new Error("Invalid endpoint");
-    }
-
-    return route;
+    const base = path.join(__dirname, 'endpoints', `${name}.endpoint`);
+    const candidates = [base + '.js', base + '.ts'];
+    const found = candidates.find(p => fs.existsSync(p));
+    if (!found) throw new Error("Invalid endpoint");
+    return found;
 }
 
 export default router;
