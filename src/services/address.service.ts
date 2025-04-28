@@ -1,20 +1,31 @@
 import loggerService from "./logger.service";
 
+/**
+ * AddressService class to interact with address API
+ * Provides functionality to request addresses, calculate distances, and lookup cities.
+ */
 class AddressService {
     private static fetchUrl = 'https://ischool.gccis.rit.edu/addresses/';
-    private cityCache: Record<string, string> = {};
+    private cityCache: Record<string, string> = {}; // In-memory cache for city lookups
 
     constructor() {}
 
+    /**
+     * Count the number of addresses matching the provided criteria
+     * @param addressRequest - Request body containing city or zip
+     * @returns Object with count (and note if no results)
+     */
     public async count(addressRequest?: any): Promise<any> {
         return new Promise<any>(async (resolve, reject) => {
             loggerService.info({ path: "/address/count", message: "Received count request" }).flush();
 
             if (!addressRequest.city && !addressRequest.zip) {
+                // If neither city nor zip provided, reject early
                 loggerService.warning({ path: "/address/count", message: "Missing city or zip" }).flush();
                 return reject(new Error('Missing required search field. Please provide at least a city or zip.'));
             }
 
+            // Call request() internally
             this.request(addressRequest)
                 .then((response) => {
                     if (!Array.isArray(response)) {
@@ -23,6 +34,7 @@ class AddressService {
                     }
 
                     if (response.length === 0) {
+                        // No results found
                         loggerService.info({ path: "/address/count", message: "Query returned no results" }).flush();
                         return resolve({
                             count: 0,
@@ -42,6 +54,12 @@ class AddressService {
         });
     }
 
+    /**
+     * Sends a POST request to the address API
+     * Supports optional pagination with page and limit
+     * @param addressRequest - JSON body with search criteria
+     * @returns List of addresses matching the criteria
+     */
     public async request(addressRequest?: any): Promise<any> {
         return new Promise<any>(async (resolve, reject) => {
             fetch(AddressService.fetchUrl, {
@@ -62,6 +80,7 @@ class AddressService {
 
                     let { page, limit } = addressRequest;
 
+                    // Validate pagination parameters
                     if (page !== undefined && isNaN(page)) {
                         loggerService.warning({
                             path: "/address/request",
@@ -78,6 +97,7 @@ class AddressService {
                         limit = undefined;
                     }
 
+                    // Default to page 1 if limit provided but page missing
                     if (limit !== undefined && page === undefined) {
                         page = 1;
                         loggerService.info({
@@ -86,6 +106,7 @@ class AddressService {
                         }).flush();
                     }
 
+                    // Apply manual pagination if needed
                     if (page !== undefined && limit !== undefined) {
                         const startIndex = (page - 1) * limit;
                         const endIndex = startIndex + limit;
@@ -113,6 +134,12 @@ class AddressService {
         });
     }
 
+    /**
+     * Calculates the distance between two sets of coordinates
+     * Supports output in kilometers, miles, or both
+     * @param addressRequest - Coordinates (lat1, lon1, lat2, lon2) and optional unit
+     * @returns Distance between the points
+     */
     public async distance(addressRequest?: any): Promise<any> {
         return new Promise<any>((resolve, reject) => {
             loggerService.info({
@@ -132,9 +159,11 @@ class AddressService {
             }
 
             try {
+                // Helper to convert degrees to radians
                 const toRadians = (degrees: number) => degrees * (Math.PI / 180);
 
-                const R = 6371;
+                // Haversine Formula for great-circle distance
+                const R = 6371; // Radius of Earth in kilometers
                 const dLat = toRadians(parseFloat(lat2) - parseFloat(lat1));
                 const dLon = toRadians(parseFloat(lon2) - parseFloat(lon1));
 
@@ -147,11 +176,13 @@ class AddressService {
                 const distanceInKm = R * c;
                 const distanceInMi = distanceInKm * 0.621371;
 
+                // Default return both units
                 let result: any = {
                     km: parseFloat(distanceInKm.toFixed(2)),
                     mi: parseFloat(distanceInMi.toFixed(2))
                 };
 
+                // Restrict based on requested unit
                 if (unit === 'km') {
                     result = { km: result.km };
                 } else if (unit === 'mi') {
@@ -175,6 +206,13 @@ class AddressService {
         });
     }
 
+    /**
+     * Looks up the city based on a ZIP or postal code
+     * Supports US and Canadian postal codes
+     * Uses an in-memory cache to reduce API calls
+     * @param addressRequest - Request with a single "zip" field
+     * @returns City name if found
+     */
     public async cityLookup(addressRequest?: any): Promise<any> {
         return new Promise<any>(async (resolve, reject) => {
             loggerService.info({
@@ -184,6 +222,7 @@ class AddressService {
 
             const zip = addressRequest?.zip;
 
+            // Validate US (5-digit) or Canadian (6-character) postal codes
             const isUSZip = typeof zip === 'string' && /^\d{5}$/.test(zip);
             const isCanadianPostal = typeof zip === 'string' && /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/.test(zip);
 
@@ -196,6 +235,7 @@ class AddressService {
                 return reject(new Error('Zip code is required (5-digit U.S. or 6-character Canadian) and no additional fields are allowed.'));
             }
 
+            // Check cache first
             if (this.cityCache[zip]) {
                 loggerService.info({
                     path: "/address/city",
@@ -206,6 +246,7 @@ class AddressService {
             }
 
             try {
+                // Fetch from API if not cached
                 const response = await fetch(AddressService.fetchUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -233,7 +274,7 @@ class AddressService {
                 }
 
                 const city = data[0].city;
-                this.cityCache[zip] = city;
+                this.cityCache[zip] = city; // Store in cache for future lookups
 
                 loggerService.info({
                     path: "/address/city",

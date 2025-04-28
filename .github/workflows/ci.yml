@@ -1,5 +1,8 @@
+# GitHub Actions CI Pipeline for build, lint, test, and build validation
+
 name: CI Pipeline
 
+# Trigger the workflow on push or pull request to specific branches
 on:
   push:
     branches: [ main, main-2, Set-Up-Build-Tooling-&-Automation ]
@@ -8,25 +11,31 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Use the latest Ubuntu runner
 
     steps:
+      # Step 1: Checkout the repository code
       - name: 📥 Checkout code
         uses: actions/checkout@v3
 
+      # Step 2: Set up Node.js environment
       - name: 🔧 Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: 20  # Use Node.js version 20
 
+      # Step 3: Install all dependencies from package.json
       - name: 📦 Install dependencies
         run: npm install
 
+      # Step 4: Run static analysis (linting) to ensure code quality
       - name: 🧹 Run ESLint
         run: npm run lint
 
+      # Step 5: Execute unit tests to validate application behavior
       - name: ✅ Run Unit Tests
         run: npm run test
 
+      # Step 6: Build the application (transpile TypeScript to JavaScript)
       - name: 🏗️ Build the project
         run: npm run build
